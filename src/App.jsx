@@ -31,7 +31,6 @@ const CardContent = ({ suitName, catchCode, pronouns, displayCon, interests, ask
 
       {/* Identity Section */}
       <div className="text-center mb-4 mt-2">
-        {/* Using style tag here to guarantee Vite's default CSS doesn't override the color */}
         <h1 className="text-4xl font-extrabold mb-1 leading-none break-words line-clamp-2 m-0 p-0" style={{ color: '#111827' }}>
           {suitName || 'Name'}
         </h1>
@@ -105,21 +104,16 @@ export default function App() {
     const updateScale = () => {
       if (containerRef.current) {
         const availableWidth = containerRef.current.clientWidth;
-        const availableHeight = window.innerHeight - 64; // Account for padding
+        const availableHeight = window.innerHeight - 64;
 
-        const cardWidth = 408; // 4.25in * 96px
-        const cardHeight = 528; // 5.5in * 96px
+        const cardWidth = 408;
+        const cardHeight = 528;
 
-        // Calculate max scale based on width, ensuring it doesn't touch the edges
         const widthScale = (availableWidth - 32) / cardWidth;
+        const heightScale = window.innerWidth >= 1024 ? (availableHeight) / cardHeight : 2;
 
-        // On desktop (lg screens), we also want to cap the height so it fits on screen
-        const heightScale = window.innerWidth >= 1024 ? (availableHeight) / cardHeight : 2; // Allow large scale on mobile/tablet vertical scrolling
-
-        // Use the smaller of the available scales, but cap it so it doesn't get ludicrously huge on ultrawides
         const finalScale = Math.min(widthScale, heightScale, 1.8);
-
-        setScale(Math.max(0.3, finalScale)); // Ensure it never gets completely unreadable
+        setScale(Math.max(0.3, finalScale));
       }
     };
 
@@ -145,7 +139,6 @@ export default function App() {
   return (
     <>
       {/* --- SCREEN VIEW (Hidden during print) --- */}
-      {/* Layout changes: flex-col on mobile, flex-row on lg screens. W-full to use all available space */}
       <div className="print:hidden min-h-screen bg-[#0B1320] p-4 lg:p-8 text-white flex flex-col lg:flex-row gap-8 justify-center items-start font-sans overflow-x-hidden w-full max-w-[1600px] mx-auto text-left">
 
         {/* Editor Panel */}
@@ -284,6 +277,16 @@ export default function App() {
             </svg>
             Print Double-Sided Card
           </button>
+
+          <div className="mt-4 p-4 bg-[#0B1320] border border-[#2A3B54] rounded-lg">
+            <h4 className="text-sm font-bold text-[#23A9E1] mb-2 uppercase tracking-wide">How to assemble:</h4>
+            <ol className="text-sm text-[#8B9DB6] list-decimal list-inside space-y-1 m-0 p-0">
+              <li>Print your generated card.</li>
+              <li>Cut the large outer box out of the paper.</li>
+              <li>Fold along the dashed gray line to create a double-sided card.</li>
+              <li>Slide it into your badge holder!</li>
+            </ol>
+          </div>
         </div>
 
         {/* Preview Panel */}
@@ -308,7 +311,6 @@ export default function App() {
       </div>
 
       {/* --- PRINT VIEW (Hidden on screen) --- */}
-      {/* By using dynamic classes based on printOrientation, we dictate where the card aligns on the paper */}
       <div className={`hidden print:flex w-screen h-screen justify-center bg-white m-0 p-0 ${printOrientation === 'portrait' ? 'items-start' : 'items-center'}`}>
 
         {/* The 8.5" x 5.5" paper bounding box with outline for cutting */}
@@ -316,12 +318,8 @@ export default function App() {
 
           <CardContent {...cardData} />
 
-          {/* Fold Line Indicator */}
-          <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-10 flex flex-col justify-center items-center">
-            <div className="bg-[#FFFFFF] py-4 px-1 text-[10px] font-bold text-[#9CA3AF] tracking-[0.3em] uppercase rotate-90 whitespace-nowrap m-0">
-              Fold Here
-            </div>
-          </div>
+          {/* Plain Fold Line Indicator */}
+          <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-10" />
 
           <CardContent {...cardData} />
 
@@ -329,7 +327,7 @@ export default function App() {
 
       </div>
 
-      {/* Print Styles fallback - Dynamically sets the paper orientation based on user selection */}
+      {/* Print Styles fallback */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           body, html, #root {
@@ -339,7 +337,6 @@ export default function App() {
             width: 100% !important;
             height: 100% !important;
           }
-          /* Apply dynamic orientation selected by the user */
           @page {
             size: letter ${printOrientation};
             margin: 0;
