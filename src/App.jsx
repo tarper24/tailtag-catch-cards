@@ -343,7 +343,10 @@ export default function App() {
           className="w-full flex-grow lg:flex-1 flex justify-center items-start lg:sticky lg:top-8 overflow-hidden pb-10"
           style={{ minHeight: `${5.5 * scale}in` }}
         >
-          <div className="relative">
+          <div
+            className="relative"
+            style={{ width: `${4.25 * scale}in`, height: `${5.5 * scale}in` }}
+          >
             <div
               className="absolute top-0 left-0 origin-top-left shadow-2xl border border-[#9CA3AF] overflow-hidden bg-white"
               style={{ transform: `scale(${scale})`, width: '4.25in', height: '5.5in' }}
