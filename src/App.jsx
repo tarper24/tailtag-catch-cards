@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import logo from './assets/logo.png';
 
 const CardContent = ({ suitName, catchCode, pronouns, displayCon, interests, askMeAbout, showWatermark }) => (
-  <div className="w-full h-full bg-[#FFFFFF] text-[#111827] flex flex-col relative overflow-hidden text-left box-border">
+  <div className="w-[4.25in] h-[5.5in] bg-[#FFFFFF] text-[#111827] flex flex-col flex-shrink-0 relative overflow-hidden text-left">
 
-    {/* Optional Background Watermark */}
+    {/* Optional Background Watermark - Scaled up to fill the card */}
     {showWatermark && (
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
         <img
@@ -16,18 +16,18 @@ const CardContent = ({ suitName, catchCode, pronouns, displayCon, interests, ask
     )}
 
     {/* Header Ribbon */}
-    <div className="bg-[#0B1320] text-white p-4 flex items-center justify-between border-b-4 border-[#23A9E1] relative z-10 box-border w-full">
-      <div className="flex items-center gap-2 flex-shrink-0">
+    <div className="bg-[#0B1320] text-white p-4 flex items-center justify-between border-b-4 border-[#23A9E1] relative z-10">
+      <div className="flex items-center gap-2">
         <img src={logo} alt="TailTag" className="w-8 h-8 drop-shadow-md object-contain" />
         <span className="font-bold text-xl tracking-wider m-0 p-0">TailTag</span>
       </div>
-      <div className="text-xs font-semibold text-[#8B9DB6] uppercase tracking-widest text-right leading-tight max-w-[50%] break-words">
+      <div className="text-xs font-semibold text-[#8B9DB6] uppercase tracking-widest text-right leading-tight max-w-[80px] break-words">
         {displayCon || 'CON'}
       </div>
     </div>
 
     {/* Main Content */}
-    <div className="p-5 flex-grow flex flex-col justify-between relative z-10 box-border w-full">
+    <div className="p-5 flex-grow flex flex-col justify-between relative z-10">
 
       {/* Identity Section */}
       <div className="text-center mb-4 mt-2">
@@ -78,7 +78,7 @@ const CardContent = ({ suitName, catchCode, pronouns, displayCon, interests, ask
     </div>
 
     {/* Footer */}
-    <div className="bg-[#F9FAFB] p-2 text-center text-[10px] text-[#9CA3AF] font-medium border-t border-[#E5E7EB] relative z-10 m-0 box-border w-full">
+    <div className="bg-[#F9FAFB] p-2 text-center text-[10px] text-[#9CA3AF] font-medium border-t border-[#E5E7EB] relative z-10 m-0">
       Log this catch at PlayTailTag.com
     </div>
   </div>
@@ -96,7 +96,7 @@ export default function App() {
   const [showWatermark, setShowWatermark] = useState(true);
   const [printOrientation, setPrintOrientation] = useState('portrait');
 
-  // Scaling state for the screen preview only
+  // Scaling state
   const [scale, setScale] = useState(1);
   const containerRef = useRef(null);
 
@@ -135,11 +135,6 @@ export default function App() {
 
   const displayCon = conSelection === 'Custom' ? customCon : conSelection;
   const cardData = { suitName, catchCode, pronouns, displayCon, interests, askMeAbout, showWatermark };
-
-  // Generate strict positioning styles for iOS print layout
-  const printWrapperStyle = printOrientation === 'landscape'
-    ? { width: '8.5in', height: '5.5in', marginTop: '1.25in', marginLeft: 'auto', marginRight: 'auto' }
-    : { width: '8.5in', height: '5.5in', margin: '0 auto' };
 
   return (
     <>
@@ -300,10 +295,13 @@ export default function App() {
           className="w-full flex-1 flex justify-center items-start lg:sticky lg:top-8 overflow-hidden pb-10"
           style={{ minHeight: `${5.5 * scale}in` }}
         >
-          <div className="relative">
+          <div
+            className="relative"
+            style={{ width: `${4.25 * scale}in`, height: `${5.5 * scale}in` }}
+          >
             <div
-              className="absolute top-0 left-0 origin-top-left shadow-2xl border border-[#9CA3AF] overflow-hidden bg-white"
-              style={{ transform: `scale(${scale})`, width: '4.25in', height: '5.5in' }}
+              className="absolute top-0 left-0 origin-top-left shadow-2xl border border-[#9CA3AF] overflow-hidden"
+              style={{ transform: `scale(${scale})` }}
             >
               <CardContent {...cardData} />
             </div>
@@ -313,29 +311,17 @@ export default function App() {
       </div>
 
       {/* --- PRINT VIEW (Hidden on screen) --- */}
-      {/* Using 'block' and absolute positioning prevents iOS Safari from breaking Flexbox layouts.
-        If Safari enforces hardware margins (e.g. 8.0" max width), the absolute boundaries force Safari
-        to trigger its native "Shrink to Fit" scaling on the entire document uniformly.
-      */}
-      <div className="hidden print:block w-full bg-white m-0 p-0 box-border">
+      <div className={`hidden print:flex w-screen h-screen justify-center bg-white m-0 p-0 ${printOrientation === 'portrait' ? 'items-start' : 'items-center'}`}>
 
-        <div
-          className="relative border border-[#9CA3AF] box-border overflow-hidden print-wrapper"
-          style={printWrapperStyle}
-        >
+        {/* The 8.5" x 5.5" paper bounding box with outline for cutting */}
+        <div className="w-[8.5in] h-[5.5in] bg-[#FFFFFF] relative flex flex-row border border-[#9CA3AF] flex-shrink-0 m-0 p-0 box-border">
 
-          {/* Card Left - Absolutely positioned to 0 */}
-          <div className="absolute left-0 top-0 bottom-0 w-[4.25in] box-border">
-            <CardContent {...cardData} />
-          </div>
+          <CardContent {...cardData} />
 
-          {/* Plain Fold Line Indicator - Absolutely positioned exactly in the center */}
-          <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-20" />
+          {/* Plain Fold Line Indicator */}
+          <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-10" />
 
-          {/* Card Right - Absolutely positioned precisely after the fold line */}
-          <div className="absolute left-[4.25in] top-0 bottom-0 w-[4.25in] box-border">
-            <CardContent {...cardData} />
-          </div>
+          <CardContent {...cardData} />
 
         </div>
 
@@ -344,17 +330,16 @@ export default function App() {
       {/* Print Styles fallback */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          body, html {
+          body, html, #root {
             background: #FFFFFF !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            display: block !important;
           }
           @page {
             size: letter ${printOrientation};
-            margin: 0cm;
+            margin: 0;
           }
           * {
             -webkit-print-color-adjust: exact !important;
