@@ -1,32 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import logo from './assets/logo.png';
 
-const CardContent = ({ suitName, catchCode, pronouns, displayCon, interests, askMeAbout, showWatermark }) => {
-  const [sizeLevel, setSizeLevel] = useState(0);
+const CardContent = ({
+  suitName, catchCode, pronouns, displayCon, interests, askMeAbout, showWatermark,
+  isPreview, sizeLevel = 0, onSizeChange
+}) => {
   const textContainerRef = useRef(null);
 
-  // Reset text size to largest whenever the user changes the content
+  // If this is the preview card, reset the text size whenever the user types new content
   useEffect(() => {
-    setSizeLevel(0);
-  }, [interests, askMeAbout, suitName]);
+    if (isPreview && onSizeChange) {
+      onSizeChange(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interests, askMeAbout, suitName, displayCon]);
 
-  // Measure available space and shrink if necessary
+  // Measure the available space in the preview card and shrink if necessary
   useEffect(() => {
+    if (!isPreview || !onSizeChange) return;
+
     const checkFit = () => {
       if (!textContainerRef.current) return;
       const { scrollHeight, clientHeight } = textContainerRef.current;
 
       // If the actual text height is larger than the container, step down the size
-      // We check sizeLevel < 3 so it doesn't shrink infinitely past the smallest size
       if (scrollHeight > clientHeight + 2 && sizeLevel < 3) {
-        setSizeLevel(prev => prev + 1);
+        onSizeChange(sizeLevel + 1);
       }
     };
 
-    // Tiny timeout ensures the DOM has fully rendered the new text before we measure it
-    const timer = setTimeout(checkFit, 5);
+    const timer = setTimeout(checkFit, 15);
     return () => clearTimeout(timer);
-  }, [interests, askMeAbout, sizeLevel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interests, askMeAbout, sizeLevel, isPreview]);
 
   // The 4 different scale levels for fonts and margins
   const style = [
@@ -114,6 +120,7 @@ const CardContent = ({ suitName, catchCode, pronouns, displayCon, interests, ask
       </div>
 
       {/* Footer */}
+      {/* Absolutely positioned so the text container can never push it off the card */}
       <div className="absolute bottom-0 left-0 right-0 bg-[#F9FAFB] p-2 text-center text-[10px] text-[#9CA3AF] font-medium border-t border-[#E5E7EB] z-20 m-0 box-border">
         Log this catch at PlayTailTag.com
       </div>
@@ -133,7 +140,10 @@ export default function App() {
   const [showWatermark, setShowWatermark] = useState(true);
   const [printOrientation, setPrintOrientation] = useState('portrait');
 
-  // Scaling state
+  // Lifted state: App owns the sizeLevel so both Preview and Print match exactly
+  const [sizeLevel, setSizeLevel] = useState(0);
+
+  // Scaling state for visual UI preview only
   const [scale, setScale] = useState(1);
   const containerRef = useRef(null);
 
@@ -326,7 +336,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* Preview Panel */}
+        {/* Preview Panel - This card is visible and calculates the sizeLevel */}
         <div
           ref={containerRef}
           className="w-full flex-1 flex justify-center items-start lg:sticky lg:top-8 overflow-hidden pb-10"
@@ -337,7 +347,12 @@ export default function App() {
               className="absolute top-0 left-0 origin-top-left shadow-2xl border border-[#9CA3AF] overflow-hidden bg-white"
               style={{ transform: `scale(${scale})`, width: '4.25in', height: '5.5in' }}
             >
-              <CardContent {...cardData} />
+              <CardContent
+                {...cardData}
+                isPreview={true}
+                sizeLevel={sizeLevel}
+                onSizeChange={setSizeLevel}
+              />
             </div>
           </div>
         </div>
@@ -347,25 +362,32 @@ export default function App() {
       {/* --- PRINT VIEW (Hidden on screen) --- */}
       <div className="hidden print:block w-full bg-white m-0 p-0 box-border">
 
-        {/* We use strict CSS Grid. We remove the margins here and let the @page rules handle the centering! */}
+        {/* We use strict absolute positioning.
+            No flexbox or grid squishing. The entire block is exactly 8.5in x 5.5in.
+            The landscape top margin explicitly ensures it isn't glued to the absolute top of the page.
+        */}
         <div
           className="relative border border-[#9CA3AF] bg-white overflow-hidden box-border mx-auto"
           style={{
-            display: 'grid',
-            gridTemplateColumns: '4.25in 4.25in',
             width: '8.5in',
             height: '5.5in',
+            marginTop: printOrientation === 'landscape' ? '0.5in' : '0',
+            pageBreakInside: 'avoid',
+            breakInside: 'avoid'
           }}
         >
 
-          <div className="relative w-full h-full box-border">
-            <CardContent {...cardData} />
+          {/* Left Card - Receives the sizeLevel calculated by the preview */}
+          <div className="absolute left-0 top-0 w-[4.25in] h-[5.5in] box-border">
+            <CardContent {...cardData} sizeLevel={sizeLevel} />
           </div>
 
-          <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-20" style={{ transform: 'translateX(-50%)' }} />
+          {/* Fold Line */}
+          <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-20" />
 
-          <div className="relative w-full h-full box-border">
-            <CardContent {...cardData} />
+          {/* Right Card - Receives the sizeLevel calculated by the preview */}
+          <div className="absolute left-[4.25in] top-0 w-[4.25in] h-[5.5in] box-border">
+            <CardContent {...cardData} sizeLevel={sizeLevel} />
           </div>
 
         </div>
@@ -379,11 +401,12 @@ export default function App() {
             background: #FFFFFF !important;
             margin: 0 !important;
             padding: 0 !important;
+            width: 100% !important;
           }
-          /* Using auto margins natively centers it in landscape, 0 auto pins it to top in portrait */
+          /* We clear the OS hardware margins so our explicit 0.5in marginTop handles placement safely */
           @page {
             size: letter ${printOrientation};
-            margin: ${printOrientation === 'landscape' ? 'auto' : '0 auto'};
+            margin: 0;
           }
           * {
             -webkit-print-color-adjust: exact !important;
