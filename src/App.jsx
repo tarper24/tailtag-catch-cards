@@ -138,7 +138,9 @@ export default function App() {
   const [askMeAbout, setAskMeAbout] = useState('');
 
   const [showWatermark, setShowWatermark] = useState(true);
-  const [printOrientation, setPrintOrientation] = useState('portrait');
+
+  // Default is now landscape to ensure highest compatibility
+  const [printOrientation, setPrintOrientation] = useState('landscape');
 
   // Lifted state: App owns the sizeLevel so both Preview and Print match exactly
   const [sizeLevel, setSizeLevel] = useState(0);
@@ -287,8 +289,8 @@ export default function App() {
                   onChange={(e) => setPrintOrientation(e.target.value)}
                   className="w-full bg-[#0B1320] border border-[#2A3B54] rounded-lg p-2.5 text-white focus:outline-none focus:border-[#23A9E1] appearance-none"
                 >
-                  <option value="portrait">Portrait (Aligns to Top Edge)</option>
                   <option value="landscape">Landscape (Centered on page)</option>
+                  <option value="portrait">Portrait (Edge-to-edge along top edge)</option>
                 </select>
               </div>
 
@@ -316,9 +318,21 @@ export default function App() {
             </div>
           </div>
 
+          {/* Warning notice when Portrait is selected */}
+          {printOrientation === 'portrait' && (
+            <div className="mt-6 p-3.5 bg-[#2A1F13] border border-[#92400E] rounded-lg flex items-start gap-3">
+              <svg className="w-5 h-5 text-[#F59E0B] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p className="text-sm text-[#FDE68A] leading-relaxed m-0 p-0">
+                <strong className="font-bold text-[#F59E0B]">Note:</strong> This mode prints edge-to-edge and may not be compatible with all devices or printers. If your card gets cut off, please switch back to Landscape!
+              </p>
+            </div>
+          )}
+
           <button
             onClick={handlePrint}
-            className="mt-8 w-full bg-[#23A9E1] hover:bg-[#1C88B5] text-[#0B1320] font-bold py-3 px-4 rounded-full transition-colors flex justify-center items-center gap-2 cursor-pointer border-none"
+            className="mt-6 w-full bg-[#23A9E1] hover:bg-[#1C88B5] text-[#0B1320] font-bold py-3 px-4 rounded-full transition-colors flex justify-center items-center gap-2 cursor-pointer border-none"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -366,10 +380,6 @@ export default function App() {
       {/* --- PRINT VIEW (Hidden on screen) --- */}
       <div className="hidden print:block w-full bg-white m-0 p-0 box-border">
 
-        {/* We use strict absolute positioning.
-            No flexbox or grid squishing. The entire block is exactly 8.5in x 5.5in.
-            The landscape top margin explicitly ensures it isn't glued to the absolute top of the page.
-        */}
         <div
           className="relative border border-[#9CA3AF] bg-white overflow-hidden box-border mx-auto"
           style={{
@@ -381,7 +391,7 @@ export default function App() {
           }}
         >
 
-          {/* Left Card - Receives the sizeLevel calculated by the preview */}
+          {/* Left Card */}
           <div className="absolute left-0 top-0 w-[4.25in] h-[5.5in] box-border">
             <CardContent {...cardData} sizeLevel={sizeLevel} />
           </div>
@@ -389,7 +399,7 @@ export default function App() {
           {/* Fold Line */}
           <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-20" />
 
-          {/* Right Card - Receives the sizeLevel calculated by the preview */}
+          {/* Right Card */}
           <div className="absolute left-[4.25in] top-0 w-[4.25in] h-[5.5in] box-border">
             <CardContent {...cardData} sizeLevel={sizeLevel} />
           </div>
@@ -398,7 +408,7 @@ export default function App() {
 
       </div>
 
-      {/* Print Styles fallback - Includes aggressive resets for dark mode backgrounds */}
+      {/* Print Styles fallback */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           body, html, #root {
@@ -408,7 +418,6 @@ export default function App() {
             padding: 0 !important;
             width: 100% !important;
           }
-          /* We clear the OS hardware margins so our explicit 0.5in marginTop handles placement safely */
           @page {
             size: letter ${printOrientation};
             margin: 0;
