@@ -1,88 +1,132 @@
 import React, { useState, useEffect, useRef } from 'react';
 import logo from './assets/logo.png';
 
-const CardContent = ({ suitName, catchCode, pronouns, displayCon, interests, askMeAbout, showWatermark }) => (
-  <div className="w-[4.25in] h-[5.5in] bg-[#FFFFFF] text-[#111827] flex flex-col flex-shrink-0 relative overflow-hidden text-left">
+const CardContent = ({
+  suitName, catchCode, pronouns, displayCon, interests, askMeAbout, showWatermark,
+  isPreview, sizeLevel = 0, onSizeChange
+}) => {
+  const textContainerRef = useRef(null);
 
-    {/* Optional Background Watermark - Scaled up to fill the card */}
-    {showWatermark && (
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <img
-          src={logo}
-          alt=""
-          className="w-full h-full object-contain opacity-[0.04] grayscale scale-[1.35]"
-        />
-      </div>
-    )}
+  // If this is the preview card, reset the text size whenever the user types new content
+  useEffect(() => {
+    if (isPreview && onSizeChange) {
+      onSizeChange(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interests, askMeAbout, suitName, displayCon]);
 
-    {/* Header Ribbon */}
-    <div className="bg-[#0B1320] text-white p-4 flex items-center justify-between border-b-4 border-[#23A9E1] relative z-10">
-      <div className="flex items-center gap-2">
-        <img src={logo} alt="TailTag" className="w-8 h-8 drop-shadow-md object-contain" />
-        <span className="font-bold text-xl tracking-wider m-0 p-0">TailTag</span>
-      </div>
-      <div className="text-xs font-semibold text-[#8B9DB6] uppercase tracking-widest text-right leading-tight max-w-[80px] break-words">
-        {displayCon || 'CON'}
-      </div>
-    </div>
+  // Measure the available space in the preview card and shrink if necessary
+  useEffect(() => {
+    if (!isPreview || !onSizeChange) return;
 
-    {/* Main Content */}
-    <div className="p-5 flex-grow flex flex-col justify-between relative z-10">
+    const checkFit = () => {
+      if (!textContainerRef.current) return;
+      const { scrollHeight, clientHeight } = textContainerRef.current;
 
-      {/* Identity Section */}
-      <div className="text-center mb-4 mt-2">
-        <h1 className="text-4xl font-extrabold mb-1 leading-none break-words line-clamp-2 m-0 p-0" style={{ color: '#111827' }}>
-          {suitName || 'Name'}
-        </h1>
-        <p className="text-[#6B7280] font-medium text-sm h-5 m-0 p-0">{pronouns}</p>
-      </div>
+      // If the actual text height is larger than the container, step down the size
+      if (scrollHeight > clientHeight + 2 && sizeLevel < 3) {
+        onSizeChange(sizeLevel + 1);
+      }
+    };
 
-      {/* Catch Code Badge */}
-      <div className="flex flex-col items-center mb-6">
-        <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-1">Catch Code</span>
-        <div className="bg-[#EAF6FA] text-[#1C88B5] border-2 border-[#23A9E1] px-6 py-2 rounded-lg font-mono font-bold text-2xl tracking-[0.2em] shadow-sm uppercase min-w-[160px] text-center">
-          {catchCode || 'XXXXXX'}
+    const timer = setTimeout(checkFit, 15);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interests, askMeAbout, sizeLevel, isPreview]);
+
+  // The 4 different scale levels for fonts and margins
+  const style = [
+    { text: 'text-sm', header: 'text-xs', space: 'space-y-4', gap: 'space-y-1', mt: 'mt-4', mb: 'mb-2', pb: 'pb-1' },
+    { text: 'text-xs', header: 'text-[10px]', space: 'space-y-2', gap: 'space-y-0.5', mt: 'mt-2', mb: 'mb-1', pb: 'pb-0.5' },
+    { text: 'text-[10px] leading-tight', header: 'text-[9px]', space: 'space-y-1', gap: 'space-y-0', mt: 'mt-1', mb: 'mb-0.5', pb: 'pb-0' },
+    { text: 'text-[8.5px] leading-tight', header: 'text-[8.5px]', space: 'space-y-0.5', gap: 'space-y-0', mt: 'mt-0.5', mb: 'mb-0', pb: 'pb-0' }
+  ][sizeLevel];
+
+  return (
+    <div className="w-full h-full bg-[#FFFFFF] text-[#111827] flex flex-col relative overflow-hidden text-left box-border">
+
+      {/* Optional Background Watermark */}
+      {showWatermark && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+          <img
+            src={logo}
+            alt=""
+            className="w-full h-full object-contain opacity-[0.04] grayscale scale-[1.35]"
+          />
+        </div>
+      )}
+
+      {/* Header Ribbon */}
+      <div className="bg-[#0B1320] text-white p-4 flex items-center justify-between border-b-4 border-[#23A9E1] relative z-10 box-border w-full flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <img src={logo} alt="TailTag" className="w-8 h-8 drop-shadow-md object-contain" />
+          <span className="font-bold text-xl tracking-wider m-0 p-0">TailTag</span>
+        </div>
+        <div className="text-xs font-semibold text-[#8B9DB6] uppercase tracking-widest text-right leading-tight max-w-[50%] break-words">
+          {displayCon || 'CON'}
         </div>
       </div>
 
-      {/* Details Sections */}
-      <div className="space-y-4 flex-grow text-left">
-        {interests && (
-          <div>
-            <h3 className="text-xs font-bold text-[#23A9E1] uppercase tracking-widest border-b border-[#E5E7EB] pb-1 mb-2 m-0">Interests</h3>
-            <ul className="text-sm text-[#374151] space-y-1 m-0 p-0 list-none">
-              {interests.split('\n').map((item, i) => item.trim() && (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-[#23A9E1] mt-0.5">•</span>
-                  <span className="leading-tight">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+      {/* Main Content Area */}
+      {/* pb-10 guarantees it stops before touching the absolute footer */}
+      <div className="p-5 pb-10 flex-grow flex flex-col justify-start relative z-10 box-border w-full h-full overflow-hidden">
 
-        {askMeAbout && (
-          <div>
-            <h3 className="text-xs font-bold text-[#23A9E1] uppercase tracking-widest border-b border-[#E5E7EB] pb-1 mb-2 m-0 mt-4">Ask me about...</h3>
-            <ul className="text-sm text-[#374151] space-y-1 m-0 p-0 list-none">
-              {askMeAbout.split('\n').map((item, i) => item.trim() && (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-[#23A9E1] mt-0.5">•</span>
-                  <span className="leading-tight">{item}</span>
-                </li>
-              ))}
-            </ul>
+        {/* Identity Section */}
+        <div className="text-center mb-4 mt-2 flex-shrink-0">
+          <h1 className="text-4xl font-extrabold mb-1 leading-none break-words line-clamp-2 m-0 p-0" style={{ color: '#111827' }}>
+            {suitName || 'Name'}
+          </h1>
+          <p className="text-[#6B7280] font-medium text-sm h-5 m-0 p-0">{pronouns}</p>
+        </div>
+
+        {/* Catch Code Badge */}
+        <div className="flex flex-col items-center mb-6 flex-shrink-0">
+          <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-1">Catch Code</span>
+          <div className="bg-[#EAF6FA] text-[#1C88B5] border-2 border-[#23A9E1] px-6 py-2 rounded-lg font-mono font-bold text-2xl tracking-[0.2em] shadow-sm uppercase min-w-[160px] text-center">
+            {catchCode || 'XXXXXX'}
           </div>
-        )}
+        </div>
+
+        {/* Details Sections - Auto Scaling Container */}
+        <div ref={textContainerRef} className={`flex-grow text-left overflow-hidden ${style.space} min-h-0`}>
+          {interests && (
+            <div>
+              <h3 className={`${style.header} font-bold text-[#23A9E1] uppercase tracking-widest border-b border-[#E5E7EB] ${style.pb} ${style.mb} m-0`}>Interests</h3>
+              <ul className={`${style.text} text-[#374151] ${style.gap} m-0 p-0 list-none`}>
+                {interests.split('\n').map((item, i) => item.trim() && (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-[#23A9E1] mt-0.5">•</span>
+                    <span className="leading-tight">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {askMeAbout && (
+            <div>
+              <h3 className={`${style.header} font-bold text-[#23A9E1] uppercase tracking-widest border-b border-[#E5E7EB] ${style.pb} ${style.mb} m-0 ${style.mt}`}>Ask me about...</h3>
+              <ul className={`${style.text} text-[#374151] ${style.gap} m-0 p-0 list-none`}>
+                {askMeAbout.split('\n').map((item, i) => item.trim() && (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-[#23A9E1] mt-0.5">•</span>
+                    <span className="leading-tight">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      {/* Absolutely positioned so the text container can never push it off the card */}
+      <div className="absolute bottom-0 left-0 right-0 bg-[#F9FAFB] p-2 text-center text-[10px] text-[#9CA3AF] font-medium border-t border-[#E5E7EB] z-20 m-0 box-border">
+        Log this catch at PlayTailTag.com
       </div>
     </div>
-
-    {/* Footer */}
-    <div className="bg-[#F9FAFB] p-2 text-center text-[10px] text-[#9CA3AF] font-medium border-t border-[#E5E7EB] relative z-10 m-0">
-      Log this catch at PlayTailTag.com
-    </div>
-  </div>
-);
+  );
+};
 
 export default function App() {
   const [suitName, setSuitName] = useState('');
@@ -94,9 +138,14 @@ export default function App() {
   const [askMeAbout, setAskMeAbout] = useState('');
 
   const [showWatermark, setShowWatermark] = useState(true);
-  const [printOrientation, setPrintOrientation] = useState('portrait');
 
-  // Scaling state
+  // Default is now landscape to ensure highest compatibility
+  const [printOrientation, setPrintOrientation] = useState('landscape');
+
+  // Lifted state: App owns the sizeLevel so both Preview and Print match exactly
+  const [sizeLevel, setSizeLevel] = useState(0);
+
+  // Scaling state for visual UI preview only
   const [scale, setScale] = useState(1);
   const containerRef = useRef(null);
 
@@ -104,7 +153,8 @@ export default function App() {
     const updateScale = () => {
       if (containerRef.current) {
         const availableWidth = containerRef.current.clientWidth;
-        const availableHeight = window.innerHeight - 64;
+        // Adjust for mobile screens where vertical space is constrained
+        const availableHeight = window.innerHeight > 600 ? window.innerHeight - 64 : 400;
 
         const cardWidth = 408;
         const cardHeight = 528;
@@ -113,7 +163,7 @@ export default function App() {
         const heightScale = window.innerWidth >= 1024 ? (availableHeight) / cardHeight : 2;
 
         const finalScale = Math.min(widthScale, heightScale, 1.8);
-        setScale(Math.max(0.3, finalScale));
+        setScale(Math.max(0.4, finalScale)); // Slightly larger minimum scale
       }
     };
 
@@ -142,7 +192,7 @@ export default function App() {
       <div className="print:hidden min-h-screen bg-[#0B1320] p-4 lg:p-8 text-white flex flex-col lg:flex-row gap-8 justify-center items-start font-sans overflow-x-hidden w-full max-w-[1600px] mx-auto text-left">
 
         {/* Editor Panel */}
-        <div className="w-full lg:max-w-xl bg-[#162133] border border-[#2A3B54] p-6 lg:p-8 rounded-xl shadow-lg shrink-0 flex-1">
+        <div className="w-full lg:max-w-xl bg-[#162133] border border-[#2A3B54] p-6 lg:p-8 rounded-xl shadow-lg shrink-0 lg:flex-1">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-white tracking-wide m-0 p-0">Card Editor</h2>
             <p className="text-[#8B9DB6] text-sm mt-1 m-0 p-0">Fill out your fursuit details to generate your printable catch cards.</p>
@@ -239,8 +289,8 @@ export default function App() {
                   onChange={(e) => setPrintOrientation(e.target.value)}
                   className="w-full bg-[#0B1320] border border-[#2A3B54] rounded-lg p-2.5 text-white focus:outline-none focus:border-[#23A9E1] appearance-none"
                 >
-                  <option value="portrait">Portrait (Aligns to Top Edge)</option>
                   <option value="landscape">Landscape (Centered on page)</option>
+                  <option value="portrait">Portrait (Edge-to-edge along top edge)</option>
                 </select>
               </div>
 
@@ -268,9 +318,21 @@ export default function App() {
             </div>
           </div>
 
+          {/* Warning notice when Portrait is selected */}
+          {printOrientation === 'portrait' && (
+            <div className="mt-6 p-3.5 bg-[#2A1F13] border border-[#92400E] rounded-lg flex items-start gap-3">
+              <svg className="w-5 h-5 text-[#F59E0B] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p className="text-sm text-[#FDE68A] leading-relaxed m-0 p-0">
+                <strong className="font-bold text-[#F59E0B]">Note:</strong> This mode prints edge-to-edge and may not be compatible with all devices or printers. If your card gets cut off, please switch back to Landscape!
+              </p>
+            </div>
+          )}
+
           <button
             onClick={handlePrint}
-            className="mt-8 w-full bg-[#23A9E1] hover:bg-[#1C88B5] text-[#0B1320] font-bold py-3 px-4 rounded-full transition-colors flex justify-center items-center gap-2 cursor-pointer border-none"
+            className="mt-6 w-full bg-[#23A9E1] hover:bg-[#1C88B5] text-[#0B1320] font-bold py-3 px-4 rounded-full transition-colors flex justify-center items-center gap-2 cursor-pointer border-none"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -289,10 +351,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* Preview Panel */}
+        {/* Preview Panel - This card is visible and calculates the sizeLevel */}
         <div
           ref={containerRef}
-          className="w-full flex-1 flex justify-center items-start lg:sticky lg:top-8 overflow-hidden pb-10"
+          className="w-full flex-grow lg:flex-1 flex justify-center items-start lg:sticky lg:top-8 overflow-hidden pb-10"
           style={{ minHeight: `${5.5 * scale}in` }}
         >
           <div
@@ -300,10 +362,15 @@ export default function App() {
             style={{ width: `${4.25 * scale}in`, height: `${5.5 * scale}in` }}
           >
             <div
-              className="absolute top-0 left-0 origin-top-left shadow-2xl border border-[#9CA3AF] overflow-hidden"
-              style={{ transform: `scale(${scale})` }}
+              className="absolute top-0 left-0 origin-top-left shadow-2xl border border-[#9CA3AF] overflow-hidden bg-white"
+              style={{ transform: `scale(${scale})`, width: '4.25in', height: '5.5in' }}
             >
-              <CardContent {...cardData} />
+              <CardContent
+                {...cardData}
+                isPreview={true}
+                sizeLevel={sizeLevel}
+                onSizeChange={setSizeLevel}
+              />
             </div>
           </div>
         </div>
@@ -311,17 +378,31 @@ export default function App() {
       </div>
 
       {/* --- PRINT VIEW (Hidden on screen) --- */}
-      <div className={`hidden print:flex w-screen h-screen justify-center bg-white m-0 p-0 ${printOrientation === 'portrait' ? 'items-start' : 'items-center'}`}>
+      <div className="hidden print:block w-full bg-white m-0 p-0 box-border">
 
-        {/* The 8.5" x 5.5" paper bounding box with outline for cutting */}
-        <div className="w-[8.5in] h-[5.5in] bg-[#FFFFFF] relative flex flex-row border border-[#9CA3AF] flex-shrink-0 m-0 p-0 box-border">
+        <div
+          className="relative border border-[#9CA3AF] bg-white overflow-hidden box-border mx-auto"
+          style={{
+            width: '8.5in',
+            height: '5.5in',
+            marginTop: printOrientation === 'landscape' ? '0.5in' : '0',
+            pageBreakInside: 'avoid',
+            breakInside: 'avoid'
+          }}
+        >
 
-          <CardContent {...cardData} />
+          {/* Left Card */}
+          <div className="absolute left-0 top-0 w-[4.25in] h-[5.5in] box-border">
+            <CardContent {...cardData} sizeLevel={sizeLevel} />
+          </div>
 
-          {/* Plain Fold Line Indicator */}
-          <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-10" />
+          {/* Fold Line */}
+          <div className="absolute left-[4.25in] top-0 bottom-0 w-px border-l-2 border-dashed border-[#9CA3AF] z-20" />
 
-          <CardContent {...cardData} />
+          {/* Right Card */}
+          <div className="absolute left-[4.25in] top-0 w-[4.25in] h-[5.5in] box-border">
+            <CardContent {...cardData} sizeLevel={sizeLevel} />
+          </div>
 
         </div>
 
@@ -331,11 +412,11 @@ export default function App() {
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           body, html, #root {
-            background: #FFFFFF !important;
+            background-color: transparent !important;
+            background: transparent !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
-            height: 100% !important;
           }
           @page {
             size: letter ${printOrientation};
