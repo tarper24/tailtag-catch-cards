@@ -151,7 +151,8 @@ export default function App() {
     const updateScale = () => {
       if (containerRef.current) {
         const availableWidth = containerRef.current.clientWidth;
-        const availableHeight = window.innerHeight - 64;
+        // Adjust for mobile screens where vertical space is constrained
+        const availableHeight = window.innerHeight > 600 ? window.innerHeight - 64 : 400;
 
         const cardWidth = 408;
         const cardHeight = 528;
@@ -160,7 +161,7 @@ export default function App() {
         const heightScale = window.innerWidth >= 1024 ? (availableHeight) / cardHeight : 2;
 
         const finalScale = Math.min(widthScale, heightScale, 1.8);
-        setScale(Math.max(0.3, finalScale));
+        setScale(Math.max(0.4, finalScale)); // Slightly larger minimum scale
       }
     };
 
@@ -189,7 +190,7 @@ export default function App() {
       <div className="print:hidden min-h-screen bg-[#0B1320] p-4 lg:p-8 text-white flex flex-col lg:flex-row gap-8 justify-center items-start font-sans overflow-x-hidden w-full max-w-[1600px] mx-auto text-left">
 
         {/* Editor Panel */}
-        <div className="w-full lg:max-w-xl bg-[#162133] border border-[#2A3B54] p-6 lg:p-8 rounded-xl shadow-lg shrink-0 flex-1">
+        <div className="w-full lg:max-w-xl bg-[#162133] border border-[#2A3B54] p-6 lg:p-8 rounded-xl shadow-lg shrink-0 lg:flex-1">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-white tracking-wide m-0 p-0">Card Editor</h2>
             <p className="text-[#8B9DB6] text-sm mt-1 m-0 p-0">Fill out your fursuit details to generate your printable catch cards.</p>
@@ -339,7 +340,7 @@ export default function App() {
         {/* Preview Panel - This card is visible and calculates the sizeLevel */}
         <div
           ref={containerRef}
-          className="w-full flex-1 flex justify-center items-start lg:sticky lg:top-8 overflow-hidden pb-10"
+          className="w-full flex-grow lg:flex-1 flex justify-center items-start lg:sticky lg:top-8 overflow-hidden pb-10"
           style={{ minHeight: `${5.5 * scale}in` }}
         >
           <div className="relative">
@@ -394,11 +395,12 @@ export default function App() {
 
       </div>
 
-      {/* Print Styles fallback */}
+      {/* Print Styles fallback - Includes aggressive resets for dark mode backgrounds */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          body, html {
-            background: #FFFFFF !important;
+          body, html, #root {
+            background-color: transparent !important;
+            background: transparent !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
